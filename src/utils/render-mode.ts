@@ -37,13 +37,13 @@ export type RenderModeSummary = Pick<RenderModeResult, 'mode' | 'cache'>;
 
 const RAW = '__raw';
 
-function isRawExpression(value: unknown): value is { __raw: string } {
+export function isRawExpression(value: unknown): value is { __raw: string } {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const keys = Object.keys(value);
   return keys.length === 1 && keys[0] === RAW && typeof (value as Record<string, unknown>)[RAW] === 'string';
 }
 
-function isPlainObject(value: unknown): value is Record<string, unknown> {
+export function isPlainObject(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value) && !isRawExpression(value);
 }
 
@@ -56,7 +56,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
  * null / undefined). Anything that is not statically evaluable becomes a
  * `{ __raw: "..." }` marker and is recorded in `unresolved`.
  */
-function parseJsLiteral(input: string): { value: unknown; unresolved: string[] } {
+export function parseJsLiteral(input: string): { value: unknown; unresolved: string[] } {
   const src = input;
   const unresolved: string[] = [];
   let i = 0;
@@ -371,7 +371,7 @@ function splitTopLevel(body: string): string[] {
   return parts;
 }
 
-function findTopLevelValue(body: string, key: string): string | undefined {
+export function findTopLevelValue(body: string, key: string): string | undefined {
   for (const part of splitTopLevel(body)) {
     const match = part.match(/^\s*["']?([\w$.-]+)["']?\s*:\s*([\s\S]*)$/);
     if (match && match[1] === key) return match[2]!.trim();

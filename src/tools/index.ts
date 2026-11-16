@@ -19,6 +19,7 @@ import { registerApiCallerTools } from './api-callers.js';
 import { registerUsageTools } from './usages.js';
 import { registerSsrSafetyTools } from './ssr-safety.js';
 import { registerMiddlewareTools } from './middleware.js';
+import { registerRuntimeConfigTools } from './runtime-config.js';
 
 export function registerAllTools(server: McpServer, ctx: NuxtProjectContext): void {
   registerOverviewTools(server, ctx);
@@ -37,4 +38,5 @@ export function registerAllTools(server: McpServer, ctx: NuxtProjectContext): vo
   registerUsageTools(server, ctx);
   registerSsrSafetyTools(server, ctx);
   registerMiddlewareTools(server, ctx);
+  registerRuntimeConfigTools(server, ctx);
 }
