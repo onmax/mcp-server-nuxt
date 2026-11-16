@@ -33,7 +33,9 @@ interface LineRange {
 
 const BROWSER_GLOBAL_RE = /\b(window|document|localStorage|sessionStorage|navigator|location)\b/;
 const RANDOM_TIME_RE = /\b(Date\.now\s*\(|new\s+Date\s*\(|Math\.random\s*\(|crypto\.randomUUID\s*\(|randomUUID\s*\()/;
-const SHARED_STATE_RE = /^(const|let|var)\s+([\w$]+)\s*=\s*(ref|reactive)\s*\(/;
+const SHARED_STATE_RE =
+  /^\s*(?:export\s+)?(const|let|var)\s+([\w$]+)\s*=\s*(ref|reactive)\s*(?:<[^>]*>)?\s*\(/;
+const CONTROL_KEYWORDS = new Set(['if', 'for', 'while', 'switch', 'catch', 'with']);
 const HOOK_RE = /\b(onMounted|onBeforeMount)\b/g;
 const COMPUTED_RE = /\bcomputed\b\s*\(/g;
 
@@ -161,12 +163,130 @@ function scriptRanges(content: string): LineRange[] {
 
 function templateRanges(content: string): LineRange[] {
   const ranges: LineRange[] = [];
-  const re = /<template\b[^>]*>([\s\S]*?)<\/template\s*>/g;
+  // Nested `<template v-if>` blocks must not end the outer template range.
+  const re = /<template\b[^>]*>|<\/template\s*>/g;
   let match: RegExpExecArray | null;
+  let depth = 0;
+  let start = -1;
   while ((match = re.exec(content))) {
-    ranges.push({ start: lineOf(content, match.index), end: lineOf(content, match.index + match[0].length) });
+    if (match[0].startsWith('</')) {
+      depth--;
+      if (depth <= 0 && start >= 0) {
+        ranges.push({ start: lineOf(content, start), end: lineOf(content, match.index + match[0].length) });
+        start = -1;
+        depth = 0;
+      }
+    } else {
+      if (depth === 0) start = match.index;
+      depth++;
+    }
+  }
+  if (start >= 0) {
+    ranges.push({ start: lineOf(content, start), end: lineOf(content, content.length) });
   }
   return ranges;
+}
+
+function previousSignificant(content: string, from: number): number {
+  let i = from;
+  while (i >= 0 && /\s/.test(content[i]!)) i--;
+  return i;
+}
+
+function matchingOpenParenBackward(content: string, close: number): number {
+  let depth = 0;
+  for (let i = close; i >= 0; i--) {
+    const ch = content[i]!;
+    if (ch === ')') depth++;
+    else if (ch === '(') {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
+}
+
+/**
+ * True when the `{` at `braceIndex` opens a function / method / arrow body
+ * (as opposed to an object literal, an `if` block, a class body, ...).
+ */
+function isFunctionBrace(content: string, braceIndex: number): boolean {
+  const prev = previousSignificant(content, braceIndex - 1);
+  if (prev < 0) return false;
+  const ch = content[prev]!;
+  if (ch === '>') return true;
+  if (ch !== ')') return false;
+  const open = matchingOpenParenBackward(content, prev);
+  if (open < 0) return true;
+  const before = previousSignificant(content, open - 1);
+  if (before < 0) return true;
+  const word = /([A-Za-z_$][\w$]*)\s*$/.exec(content.slice(Math.max(0, before - 40), before + 1));
+  if (!word) return true;
+  return !CONTROL_KEYWORDS.has(word[1]!);
+}
+
+/**
+ * Function nesting depth at the start of every line. Object literals and
+ * control blocks do not increase it, so `depth === 0` means "runs during
+ * setup / at module scope" even inside `if` or an object literal.
+ */
+function functionDepthByLine(content: string): number[] {
+  const lineCount = content.split('\n').length;
+  const depths = new Array<number>(lineCount).fill(0);
+  let line = 0;
+  let depth = 0;
+  const stack: boolean[] = [];
+  let quote: string | null = null;
+  let lineComment = false;
+  let blockComment = false;
+
+  for (let i = 0; i < content.length; i++) {
+    const ch = content[i]!;
+    if (ch === '\n') {
+      lineComment = false;
+      line++;
+      if (line < lineCount) depths[line] = depth;
+      continue;
+    }
+    if (lineComment) continue;
+    if (blockComment) {
+      if (ch === '*' && content[i + 1] === '/') {
+        blockComment = false;
+        i++;
+      }
+      continue;
+    }
+    if (quote) {
+      if (ch === '\\') {
+        i++;
+        continue;
+      }
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '/' && content[i + 1] === '/') {
+      lineComment = true;
+      i++;
+      continue;
+    }
+    if (ch === '/' && content[i + 1] === '*') {
+      blockComment = true;
+      i++;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === '`') {
+      quote = ch;
+      continue;
+    }
+    if (ch === '{') {
+      const isFn = isFunctionBrace(content, i);
+      stack.push(isFn);
+      if (isFn) depth++;
+    } else if (ch === '}') {
+      if (stack.pop()) depth = Math.max(0, depth - 1);
+    }
+  }
+  return depths;
 }
 
 function computedRanges(content: string): LineRange[] {
@@ -227,6 +347,7 @@ async function scanFile(root: string, absFile: string): Promise<SsrFinding[]> {
   const scripts = scriptRanges(content);
   const templates = templateRanges(content);
   const computeds = computedRanges(content);
+  const functionDepths = functionDepthByLine(content);
 
   const addFinding = (
     line: number,
@@ -244,23 +365,28 @@ async function scanFile(root: string, absFile: string): Promise<SsrFinding[]> {
     const lineNo = i + 1;
     const inScript = !isVue || isInRanges(lineNo, scripts);
     const inTemplate = isVue && isInRanges(lineNo, templates);
+    const atSetupTopLevel = (functionDepths[lineNo - 1] ?? 0) === 0;
+    const inComputed = isInRanges(lineNo, computeds);
 
     // Rule 1: browser globals at setup top level / module scope (and template expressions).
-    if ((inScript || inTemplate) && BROWSER_GLOBAL_RE.test(line) && !isSkippableLine(line) && !isInRanges(lineNo, safeRanges)) {
-      const indent = (line.match(/^\s*/)?.[0] ?? '').length;
-      const severity = indent === 0 ? 'error' : 'warning';
+    if (
+      ((inScript && atSetupTopLevel) || inTemplate || inComputed) &&
+      BROWSER_GLOBAL_RE.test(line) &&
+      !isSkippableLine(line) &&
+      !isInRanges(lineNo, safeRanges)
+    ) {
+      const severity = inTemplate || atSetupTopLevel ? 'error' : 'warning';
       const globals = [...(line.match(/\b(window|document|localStorage|sessionStorage|navigator|location)\b/g) ?? [])].join(', ');
       addFinding(
         lineNo,
         'browser-global-ssr',
         severity,
-        `${globals} is only available in the browser and is used at setup top level / module scope.`,
-        'Move the access into onMounted / onBeforeMount, or guard it with import.meta.client / process.client / typeof window.',
+        `${globals} is only available in the browser and runs during SSR (setup top level, module scope, template or computed).`,
+        'Move the access into onMounted / onBeforeMount, or guard it with import.meta.client / process.client / typeof window, or wrap it in <ClientOnly>.',
       );
     }
 
     // Rule 2: non-deterministic values rendered in templates or computed during SSR.
-    const inComputed = isInRanges(lineNo, computeds);
     if ((inTemplate || inComputed) && RANDOM_TIME_RE.test(line) && !isSkippableLine(line)) {
       addFinding(
         lineNo,
@@ -272,7 +398,7 @@ async function scanFile(root: string, absFile: string): Promise<SsrFinding[]> {
     }
 
     // Rule 3: module-scope ref/reactive in composables (shared across requests).
-    if (isComposableFile(rel) && (line.match(/^\s*/)?.[0] ?? '').length === 0 && SHARED_STATE_RE.test(line)) {
+    if (isComposableFile(rel) && atSetupTopLevel && SHARED_STATE_RE.test(line)) {
       addFinding(
         lineNo,
         'shared-state',

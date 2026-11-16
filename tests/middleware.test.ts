@@ -8,6 +8,7 @@ import { setupServer } from '../src/server.js';
 import { explainMiddleware } from '../src/utils/middleware.js';
 
 const fixture = path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures', 'nuxt3-minimal');
+const middlewareFixture = path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures', 'middleware-app');
 
 type Tool = {
   handler: (args: Record<string, unknown>, extra?: unknown) => Promise<{ content: Array<{ text: string }> }>;
@@ -77,6 +78,48 @@ describe('explain_middleware (fixture)', () => {
     } finally {
       watcher.stop();
     }
+  });
+});
+
+describe('explain_middleware (middleware-app fixture)', () => {
+  it('lists all middleware, inline pages and missing references', async () => {
+    const result = await explainMiddleware(middlewareFixture);
+    expect(result.middleware.map((m) => m.name)).toEqual(['admin', 'auth', 'b', 'zz']);
+    expect(result.inline).toEqual([{ file: 'pages/inline.vue', path: '/inline', line: 2 }]);
+    expect(result.missingReferences).toEqual([{ page: 'pages/users.vue', middleware: 'missing' }]);
+  });
+
+  it('orders global middleware alphabetically by file path', async () => {
+    const result = await explainMiddleware(middlewareFixture);
+    // middleware/a/zz.global.ts runs before middleware/b.global.ts.
+    expect(result.globalOrder).toEqual(['zz', 'b']);
+
+    const zz = await explainMiddleware(middlewareFixture, 'zz.global');
+    expect(zz.target).toMatchObject({ name: 'zz', type: 'global', globalOrder: 1 });
+    expect(zz.target?.routes).toEqual(['/', '/admin', '/inline', '/users']);
+    expect(zz.target?.navigateTo).toBe(true);
+
+    const b = await explainMiddleware(middlewareFixture, 'middleware/b.global.ts');
+    expect(b.target).toMatchObject({ name: 'b', type: 'global', globalOrder: 2 });
+    expect(b.target?.abortNavigation).toBe(true);
+  });
+
+  it('resolves a named middleware by name and by file path', async () => {
+    const byName = await explainMiddleware(middlewareFixture, 'auth');
+    expect(byName.target).toMatchObject({ name: 'auth', type: 'named', globalOrder: null });
+    expect(byName.target?.routes).toEqual(['/users']);
+    expect(byName.target?.navigateTo).toBe(true);
+    expect(byName.target?.abortNavigation).toBe(false);
+
+    const byFile = await explainMiddleware(middlewareFixture, 'middleware/auth.ts');
+    expect(byFile.target?.name).toBe('auth');
+  });
+
+  it('reports an inline middleware page and a missing target', async () => {
+    const missing = await explainMiddleware(middlewareFixture, 'does-not-exist');
+    expect(missing.target).toBeNull();
+    expect(missing.summary).toContain('Could not resolve');
+    expect(missing.notes.join('\n')).toContain('admin');
   });
 });
 

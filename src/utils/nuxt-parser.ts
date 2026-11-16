@@ -272,23 +272,57 @@ export function extractPageMeta(content: string): {
       if (layoutMatch) layout = layoutMatch[1];
     }
 
-    const mwMatch = line.match(/middleware\s*:\s*(\[[\s\S]*?\]|["'][^"']+["']|[^,\n]+)/);
-    if (mwMatch) {
-      const raw = mwMatch[1]!.trim();
-      if (/=>|function\s*\(/.test(raw)) hasInlineMiddleware = true;
-      if (raw.startsWith('[')) {
-        middleware = [...raw.matchAll(/["']([^"']+)["']/g)].map((m) => m[1]!);
-      } else if (/^["']/.test(raw)) {
-        middleware = [raw.replace(/^["']|["']$/g, '')];
-      }
-    }
-
     const kv = line.match(/^\s*([\w$]+)\s*:\s*([\s\S]*?)\s*(?:,|$)/);
     if (kv && !['layout', 'middleware'].includes(kv[1]!)) {
       meta[kv[1]!] = kv[2]!.trim();
     }
   }
+
+  // `middleware` can be a string, an array across lines, or inline functions.
+  const mwKey = body.match(/\bmiddleware\s*:/);
+  if (mwKey && mwKey.index !== undefined) {
+    const raw = firstTopLevelValue(body.slice(mwKey.index + mwKey[0].length)).trim();
+    if (/=>|function\s*\(/.test(raw)) hasInlineMiddleware = true;
+    if (raw.startsWith('[')) {
+      const inner = raw.slice(1, raw.lastIndexOf(']'));
+      middleware = splitTopLevelComma(inner)
+        .map((part) => part.trim().match(/^["']([^"']+)["']$/)?.[1])
+        .filter((name): name is string => !!name);
+    } else {
+      const single = raw.match(/^["']([^"']+)["']$/)?.[1];
+      if (single) middleware = [single];
+    }
+  }
+
   return { meta, middleware, layout, layoutDisabled, hasInlineMiddleware };
+}
+
+/** Value up to the next top-level comma / closing bracket of the enclosing object. */
+function firstTopLevelValue(text: string): string {
+  let depth = 0;
+  let quote: string | null = null;
+  let i = 0;
+  for (; i < text.length; i++) {
+    const ch = text[i]!;
+    if (quote) {
+      if (ch === '\\') {
+        i++;
+        continue;
+      }
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === '`') {
+      quote = ch;
+      continue;
+    }
+    if (ch === '{' || ch === '[' || ch === '(') depth++;
+    else if (ch === '}' || ch === ']' || ch === ')') {
+      if (depth === 0) break;
+      depth--;
+    } else if (ch === ',' && depth === 0) break;
+  }
+  return text.slice(0, i);
 }
 
 async function listRoutesIn(scanRoot: string, layer?: string): Promise<RouteInfo[]> {
@@ -431,7 +465,24 @@ function splitTopLevelComma(text: string): string[] {
   const parts: string[] = [];
   let depth = 0;
   let current = '';
-  for (const ch of text) {
+  let quote: string | null = null;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i]!;
+    if (quote) {
+      current += ch;
+      if (ch === '\\') {
+        current += text[i + 1] ?? '';
+        i++;
+      } else if (ch === quote) {
+        quote = null;
+      }
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === '`') {
+      quote = ch;
+      current += ch;
+      continue;
+    }
     if (ch === '{' || ch === '[' || ch === '(') depth++;
     else if (ch === '}' || ch === ']' || ch === ')') depth--;
     if (ch === ',' && depth === 0) {
