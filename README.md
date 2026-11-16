@@ -49,7 +49,7 @@ A generic agent sees a Nuxt repo as a folder tree. It doesn't know that:
 - `extends: ['../ui-kit']` layers components, pages, and config over your app
 - `server/api/hello.get.ts` registers `GET /api/hello`
 
-So it guesses, and invents import paths, misnames components, and misreads layer precedence. `mcp-server-nuxt` reads Nuxt's own config loader and `.nuxt/` output (with a source-level fallback) and hands the agent the real answers through **31 tools** and **7 read-only resources**.
+So it guesses, and invents import paths, misnames components, and misreads layer precedence. `mcp-server-nuxt` reads Nuxt's own config loader and `.nuxt/` output (with a source-level fallback) and hands the agent the real answers through **32 tools** and **7 read-only resources**.
 
 It runs as a standalone CLI, so it works on a freshly cloned repo before anyone has installed dependencies or started `npm run dev`.
 
@@ -131,6 +131,7 @@ Middleware comes back in run order (global first, then named), catch-all params 
 | --- | --- |
 | `get_project_overview` | Nuxt version, layers, directories, and counts |
 | `analyze_project` | Health check with dependency warnings and prepare hints |
+| `check_nuxt4_migration` | Check a Nuxt project against the official Nuxt 4 upgrade guide: version, `app/` structure, data-fetching defaults, removed APIs/options, readiness summary |
 | `read_config` | Resolved `nuxt.config` from the project's own `@nuxt/kit` when Nuxt is installed, otherwise a source parse. Filterable by dot path |
 | `update_config` ✏️ | Change a config value, keeping comments, and return a diff |
 | `list_modules` | Installed modules with version, source, and options |

@@ -62,13 +62,13 @@ function normalizeUrl(input: string): string {
   return url || '/';
 }
 
-function lineOf(src: string, index: number): number {
+export function lineOf(src: string, index: number): number {
   let line = 1;
   for (let i = 0; i < index; i++) if (src[i] === '\n') line++;
   return line;
 }
 
-function findOpenParen(src: string, from: number): number {
+export function findOpenParen(src: string, from: number): number {
   let i = from;
   while (i < src.length && /\s/.test(src[i]!)) i++;
   if (src[i] === '<') {
@@ -89,7 +89,7 @@ function findOpenParen(src: string, from: number): number {
   return src[i] === '(' ? i : -1;
 }
 
-function findMatchingParen(src: string, open: number): number {
+export function findMatchingParen(src: string, open: number): number {
   let depth = 0;
   let inString: string | null = null;
   let inTemplate = false;

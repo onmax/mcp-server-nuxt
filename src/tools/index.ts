@@ -20,6 +20,7 @@ import { registerUsageTools } from './usages.js';
 import { registerSsrSafetyTools } from './ssr-safety.js';
 import { registerMiddlewareTools } from './middleware.js';
 import { registerRuntimeConfigTools } from './runtime-config.js';
+import { registerNuxt4MigrationTools } from './nuxt4-migration.js';
 
 export function registerAllTools(server: McpServer, ctx: NuxtProjectContext): void {
   registerOverviewTools(server, ctx);
@@ -39,4 +40,5 @@ export function registerAllTools(server: McpServer, ctx: NuxtProjectContext): vo
   registerSsrSafetyTools(server, ctx);
   registerMiddlewareTools(server, ctx);
   registerRuntimeConfigTools(server, ctx);
+  registerNuxt4MigrationTools(server, ctx);
 }
