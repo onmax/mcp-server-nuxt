@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.8.0 - 2026-11-16
+
+### Added
+- `explain_data_fetching` — list every `useFetch` / `useLazyFetch` / `useAsyncData` / `useLazyAsyncData` / `$fetch` call with URL or key, method and detected options (`lazy`, `server`, `immediate`, `watch`, `pick`, `transform`, `default`). Flags duplicate keys with different fetchers, `$fetch` in `onMounted` for template-rendered data, bare `await $fetch` at setup top level, `server: false` without lazy, and lazy results rendered without `pending` / `status`. Accepts a page/component file or a URL resolved like `explain_route`. Static analysis only; no DevServer or `nuxi prepare`.
+- `check_nuxt4_migration` — check a project against the official Nuxt 4 upgrade guide: current `package.json` version, `app/` directory or `future.compatibilityVersion: 4`, legacy root directories/files, singleton data-fetching key conflicts, `getCachedData` signature, default `data`/`error` values, shallow data reactivity, shared prerender keys, boolean `dedupe`, `pending` with `immediate: false`, `route.meta` dedup, Unhead v2 props/imports, parsed `error.data`, `window.__NUXT__`, removed `generate` / experimental options, and `pages:extend` meta. Reports readiness plus counts by severity. **33 tools** total.
+
+### Docs
+- README and SPEC_MATRIX list both new tools.
+
 ## 0.7.0 - 2026-11-16
 
 ### Added
