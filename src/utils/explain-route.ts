@@ -173,7 +173,7 @@ export function findDataFetching(content: string, file: string): ExplainRouteDat
   return results;
 }
 
-async function listAppMiddleware(
+export async function listAppMiddleware(
   root: string,
 ): Promise<Array<{ name: string; file: string; global: boolean }>> {
   const dirs = await resolveSourceDirs(root);
