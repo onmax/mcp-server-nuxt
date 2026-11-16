@@ -26,7 +26,7 @@ export interface SsrSafetyResult {
   notes: string[];
 }
 
-interface LineRange {
+export interface LineRange {
   start: number;
   end: number;
 }
@@ -45,7 +45,7 @@ function lineOf(src: string, index: number): number {
   return line;
 }
 
-function isInRanges(line: number, ranges: LineRange[]): boolean {
+export function isInRanges(line: number, ranges: LineRange[]): boolean {
   return ranges.some((range) => line >= range.start && line <= range.end);
 }
 
@@ -94,7 +94,7 @@ function findMatchingParen(src: string, open: number): number {
   return -1;
 }
 
-function mountedRanges(content: string): LineRange[] {
+export function mountedRanges(content: string): LineRange[] {
   const ranges: LineRange[] = [];
   HOOK_RE.lastIndex = 0;
   let match: RegExpExecArray | null;
@@ -151,7 +151,7 @@ function clientOnlyRanges(content: string): LineRange[] {
   return ranges;
 }
 
-function scriptRanges(content: string): LineRange[] {
+export function scriptRanges(content: string): LineRange[] {
   const ranges: LineRange[] = [];
   const re = /<script\b[^>]*>([\s\S]*?)<\/script\s*>/g;
   let match: RegExpExecArray | null;
@@ -230,7 +230,7 @@ function isFunctionBrace(content: string, braceIndex: number): boolean {
  * control blocks do not increase it, so `depth === 0` means "runs during
  * setup / at module scope" even inside `if` or an object literal.
  */
-function functionDepthByLine(content: string): number[] {
+export function functionDepthByLine(content: string): number[] {
   const lineCount = content.split('\n').length;
   const depths = new Array<number>(lineCount).fill(0);
   let line = 0;
