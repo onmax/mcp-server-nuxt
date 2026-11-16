@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.0 - 2026-11-16
+
+### Added
+- `find_usages` — resolve a component name / file path or composable name and list every file that uses it (explicit imports, Nuxt auto-imports, nested component names, `Lazy` prefix, kebab-case templates). Omit the target to list components and composables that are never referenced. Static analysis only; no DevServer or `nuxi prepare`. **28 tools** total.
+
 ## 0.5.2 - 2026-11-13
 
 ### Added

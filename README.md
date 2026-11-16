@@ -49,7 +49,7 @@ A generic agent sees a Nuxt repo as a folder tree. It doesn't know that:
 - `extends: ['../ui-kit']` layers components, pages, and config over your app
 - `server/api/hello.get.ts` registers `GET /api/hello`
 
-So it guesses, and invents import paths, misnames components, and misreads layer precedence. `mcp-server-nuxt` reads Nuxt's own config loader and `.nuxt/` output (with a source-level fallback) and hands the agent the real answers through **27 tools** and **7 read-only resources**.
+So it guesses, and invents import paths, misnames components, and misreads layer precedence. `mcp-server-nuxt` reads Nuxt's own config loader and `.nuxt/` output (with a source-level fallback) and hands the agent the real answers through **28 tools** and **7 read-only resources**.
 
 It runs as a standalone CLI, so it works on a freshly cloned repo before anyone has installed dependencies or started `npm run dev`.
 
@@ -113,6 +113,7 @@ Middleware comes back in run order (global first, then named), catch-all params 
 | Tool | What it does |
 | --- | --- |
 | `list_components` | Components from `.nuxt/components.d.ts`, or from `components` / `components.dirs` config |
+| `find_usages` | Find every file using a component/composable (imports, auto-imports, `Lazy`, kebab-case), or list unused ones |
 | `inspect_component` | Props, emits, and slots of one component |
 | `generate_component` ✏️ | Generate a typed Vue SFC |
 | `list_composables` | User-defined and auto-imported composables |

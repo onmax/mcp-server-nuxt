@@ -16,6 +16,7 @@ import { registerLayerTools } from './layers.js';
 import { registerDiagnosticTools } from './diagnostics.js';
 import { registerRenderModeTools } from './render-mode.js';
 import { registerApiCallerTools } from './api-callers.js';
+import { registerUsageTools } from './usages.js';
 
 export function registerAllTools(server: McpServer, ctx: NuxtProjectContext): void {
   registerOverviewTools(server, ctx);
@@ -31,4 +32,5 @@ export function registerAllTools(server: McpServer, ctx: NuxtProjectContext): vo
   registerDiagnosticTools(server, ctx);
   registerRenderModeTools(server, ctx);
   registerApiCallerTools(server, ctx);
+  registerUsageTools(server, ctx);
 }
