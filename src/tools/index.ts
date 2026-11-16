@@ -21,6 +21,7 @@ import { registerSsrSafetyTools } from './ssr-safety.js';
 import { registerMiddlewareTools } from './middleware.js';
 import { registerRuntimeConfigTools } from './runtime-config.js';
 import { registerDataFetchingTools } from './data-fetching.js';
+import { registerNuxt4MigrationTools } from './nuxt4-migration.js';
 
 export function registerAllTools(server: McpServer, ctx: NuxtProjectContext): void {
   registerOverviewTools(server, ctx);
@@ -41,4 +42,5 @@ export function registerAllTools(server: McpServer, ctx: NuxtProjectContext): vo
   registerMiddlewareTools(server, ctx);
   registerRuntimeConfigTools(server, ctx);
   registerDataFetchingTools(server, ctx);
+  registerNuxt4MigrationTools(server, ctx);
 }
