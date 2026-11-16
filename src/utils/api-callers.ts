@@ -54,7 +54,7 @@ interface FetchCall {
   method?: string;
 }
 
-function normalizeUrl(input: string): string {
+export function normalizeUrl(input: string): string {
   let url = input.trim();
   if (!url.startsWith('/')) url = `/${url}`;
   url = url.split('?')[0]!.split('#')[0]!;
@@ -62,13 +62,13 @@ function normalizeUrl(input: string): string {
   return url || '/';
 }
 
-function lineOf(src: string, index: number): number {
+export function lineOf(src: string, index: number): number {
   let line = 1;
   for (let i = 0; i < index; i++) if (src[i] === '\n') line++;
   return line;
 }
 
-function findOpenParen(src: string, from: number): number {
+export function findOpenParen(src: string, from: number): number {
   let i = from;
   while (i < src.length && /\s/.test(src[i]!)) i++;
   if (src[i] === '<') {
@@ -89,7 +89,7 @@ function findOpenParen(src: string, from: number): number {
   return src[i] === '(' ? i : -1;
 }
 
-function findMatchingParen(src: string, open: number): number {
+export function findMatchingParen(src: string, open: number): number {
   let depth = 0;
   let inString: string | null = null;
   let inTemplate = false;
@@ -128,7 +128,7 @@ function findMatchingParen(src: string, open: number): number {
   return -1;
 }
 
-function extractFirstArg(
+export function extractFirstArg(
   src: string,
   open: number,
 ): { url: string; template: boolean; endIdx: number } | null {
@@ -179,7 +179,7 @@ function extractFirstArg(
   return null;
 }
 
-function readFirstArgRaw(src: string, open: number): string | null {
+export function readFirstArgRaw(src: string, open: number): string | null {
   let i = open + 1;
   while (i < src.length && /\s/.test(src[i]!)) i++;
   let depth = 0;
@@ -197,7 +197,7 @@ function readFirstArgRaw(src: string, open: number): string | null {
   return out.trim() || null;
 }
 
-function extractMethod(src: string, from: number, close: number): string | undefined {
+export function extractMethod(src: string, from: number, close: number): string | undefined {
   const end = close === -1 ? src.length : close;
   const match = src.slice(from, end).match(/\bmethod\s*:\s*["']([^"']+)["']/);
   return match?.[1]!.toUpperCase();
@@ -205,7 +205,7 @@ function extractMethod(src: string, from: number, close: number): string | undef
 
 const CALL_RE = /\b(useFetch|useLazyFetch|useAsyncData|useLazyAsyncData)\b|\$fetch\b/g;
 
-function findInnerFetch(
+export function findInnerFetch(
   src: string,
   start: number,
   end: number,
