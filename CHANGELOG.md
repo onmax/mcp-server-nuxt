@@ -1,16 +1,12 @@
 # Changelog
 
-<<<<<<< HEAD
 ## 0.6.0 - 2026-11-16
 
 ### Added
 - `find_usages` — resolve a component name / file path or composable name and list every file that uses it (explicit imports, Nuxt auto-imports, nested component names, `Lazy` prefix, kebab-case templates). Omit the target to list components and composables that are never referenced. Static analysis only; no DevServer or `nuxi prepare`. **28 tools** total.
-=======
-## Unreleased
 
 ### Fixed
 - `loadNuxtConfig` loads `@nuxt/kit` from the target project's `node_modules` before this server's optional Kit 3 copy, so Nuxt 3 and Nuxt 4 each use a matching Kit. `cwd` and `rootDir` are both the project root. Kit errors are logged to stderr and the source parser still runs. The optional range stays `^3.14.0`
->>>>>>> 8f213319e9170a0baed9c5a45b7ca671f86e04a7
 
 ## 0.5.2 - 2026-11-13
 
