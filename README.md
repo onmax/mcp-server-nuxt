@@ -49,7 +49,7 @@ A generic agent sees a Nuxt repo as a folder tree. It doesn't know that:
 - `extends: ['../ui-kit']` layers components, pages, and config over your app
 - `server/api/hello.get.ts` registers `GET /api/hello`
 
-So it guesses, and invents import paths, misnames components, and misreads layer precedence. `mcp-server-nuxt` reads Nuxt's own config loader and `.nuxt/` output (with a source-level fallback) and hands the agent the real answers through **28 tools** and **7 read-only resources**.
+So it guesses, and invents import paths, misnames components, and misreads layer precedence. `mcp-server-nuxt` reads Nuxt's own config loader and `.nuxt/` output (with a source-level fallback) and hands the agent the real answers through **31 tools** and **7 read-only resources**.
 
 It runs as a standalone CLI, so it works on a freshly cloned repo before anyone has installed dependencies or started `npm run dev`.
 
@@ -88,6 +88,7 @@ Middleware comes back in run order (global first, then named), catch-all params 
 | Tool | What it does |
 | --- | --- |
 | `explain_route` | Resolve one URL: page, parents, layout, middleware order, data fetching, `/api` files, render mode |
+| `explain_middleware` | Middleware type (global/named/inline), alphabetical global run order, routes it applies to, `navigateTo`/`abortNavigation`, missing page references |
 | `explain_render_mode` | Resolve a URL's Nitro render mode from `routeRules` (ssr/spa/prerender/isr/swr/static) |
 | `list_routes` | All routes: dynamic, optional, catch-all, nested |
 | `get_route` | One route by pattern, e.g. `/users/:id` |
@@ -135,6 +136,7 @@ Middleware comes back in run order (global first, then named), catch-all params 
 | `list_modules` | Installed modules with version, source, and options |
 | `add_nuxt_module` ✏️ | Add a module to `modules` |
 | `inspect_layers` | The full `extends` hierarchy in precedence order |
+| `check_runtime_config` | Flatten `runtimeConfig` keys with `NUXT_*` env vars, scan `useRuntimeConfig()` use, flag undefined/unused keys and private keys read in client code |
 
 </details>
 
@@ -146,6 +148,7 @@ Middleware comes back in run order (global first, then named), catch-all params 
 | `check_type_errors` | Run `tsc --noEmit` against `.nuxt/tsconfig.json` |
 | `analyze_bundle_deps` | Flag missing or misplaced dependencies |
 | `search_code` | Search the codebase with line numbers and context |
+| `check_ssr_safety` | Flag SSR hazards: browser globals at setup/module scope, non-deterministic values in templates and computed, shared composable state |
 | `get_nuxt_docs` | Offline Nuxt guidance for routing, Nitro, modules, layers |
 
 </details>

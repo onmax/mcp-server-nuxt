@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.0 - 2026-11-16
+
+### Added
+- `check_ssr_safety` — statically flag SSR hazards with file, line, rule id, severity, reason and fix: browser-only globals (`window`, `document`, `localStorage`, `sessionStorage`, `navigator`, `location`) at setup top level or module scope (skipping `onMounted` / `onBeforeMount`, `import.meta.client` / `process.client` / `typeof window` guards, `<ClientOnly>` children, `*.client.vue` files and `.client.ts` plugins); `Date.now()` / `new Date()` / `Math.random()` / `crypto.randomUUID()` in templates or computed; and module-scope `ref` / `reactive` in composables with a `useState` hint. Optional `path` scopes the scan to one file or directory. **31 tools** total.
+- `explain_middleware` — explain a global (`.global.`), named, or inline `definePageMeta` middleware: type, alphabetical global run order, routes it applies to, and whether it calls `navigateTo` / `abortNavigation`. Without a name it lists all middleware, inline middleware pages, and pages that reference a middleware file that does not exist. Reuses `explain_route`'s route scanning and `definePageMeta` parsing.
+- `check_runtime_config` — parse `runtimeConfig` from `nuxt.config` like the route-rules tool, flatten private and `public.*` keys (including nested keys) with their default value type and `NUXT_<KEY>` / `NUXT_PUBLIC_<KEY>` env var, scan `useRuntimeConfig()` reads (direct, destructured, aliased, bracket access), and report used-but-undefined keys, defined-but-unused keys, and private keys read in client-side code. Optionally checks `.env` / `.env.example` for each env var name without ever printing a value.
+
+### Tests
+- New fixtures and coverage for every rule and exclusion above, including nested `<template>` blocks, handlers vs setup scope, guards, client-only files, module-scope composable state, nested/global middleware order, inline middleware, missing middleware references, nested runtimeConfig keys, destructuring/aliasing, and env-file checks.
+
 ## 0.6.0 - 2026-11-16
 
 ### Added
