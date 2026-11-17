@@ -22,6 +22,7 @@ import { registerMiddlewareTools } from './middleware.js';
 import { registerRuntimeConfigTools } from './runtime-config.js';
 import { registerDataFetchingTools } from './data-fetching.js';
 import { registerNuxt4MigrationTools } from './nuxt4-migration.js';
+import { registerInjectionTools } from './injections.js';
 
 export function registerAllTools(server: McpServer, ctx: NuxtProjectContext): void {
   registerOverviewTools(server, ctx);
@@ -43,4 +44,5 @@ export function registerAllTools(server: McpServer, ctx: NuxtProjectContext): vo
   registerRuntimeConfigTools(server, ctx);
   registerDataFetchingTools(server, ctx);
   registerNuxt4MigrationTools(server, ctx);
+  registerInjectionTools(server, ctx);
 }
