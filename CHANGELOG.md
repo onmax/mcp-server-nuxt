@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.0 - 2026-11-17
+
+### Added
+- `explain_injections` — statically trace Nuxt plugin injections. Detects providers from `defineNuxtPlugin` function and object forms (returned `provide` objects and `nuxtApp.provide` calls, including renamed plugin context parameters), records client/server/universal scope from `.client` / `.server` files and `import.meta.client` / `import.meta.server` / `process.client` / `process.server` guards, and scans destructured, aliased, member, computed-member and Vue template references. Groups by injection name with resolution status (`resolved`, `unresolved`, `multiple-providers`, `no-static-references`, `framework-provided`), diagnostics, limitations and skipped/unreadable files. Read-only static analysis; no DevServer or `nuxi prepare`. **34 tools** total.
+
+### Docs
+- README and SPEC_MATRIX list `explain_injections`.
+
 ## 0.8.0 - 2026-11-16
 
 ### Added
